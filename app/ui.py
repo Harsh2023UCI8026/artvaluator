@@ -97,117 +97,81 @@
 
 import streamlit as st
 import os
-from openai import OpenAI
+import google.generativeai as genai
 from env.art_env import ArtEnv, Action
 
-# API client configuration
-# Make sure HF_TOKEN and API_BASE_URL are set in Hugging Face Secrets
-client = OpenAI(
-    base_url=os.environ.get("API_BASE_URL"),
-    api_key=os.environ.get("HF_TOKEN")
-)
+# Gemini Configuration
+# Ensure 'GEMINI_API_KEY' is set in Hugging Face Secrets
+genai.configure(api_key=os.environ.get("GEMINI_API_KEY"))
+model = genai.GenerativeModel('gemini-1.5-flash')
 
 def main():
-    st.set_page_config(page_title="ArtValuator | Professional Art Analysis", layout="centered")
+    st.set_page_config(page_title="ArtValuator Pro", layout="centered")
     st.title("🎨 ArtValuator")
-    st.write("Professional tools se apni artwork ka sahi mulyankan karein.")
+    
+    # Warning fix: updated width parameter
+    uploaded_file = st.file_uploader("Artwork upload karein", type=["jpg", "png", "jpeg"])
 
-    # File uploader
-    artwork_file = st.file_uploader("Apni artwork ki image yahan upload karein", type=["jpg", "png", "jpeg"])
-
-    if artwork_file:
-        # Warning fix: updated use_column_width to width
-        st.image(artwork_file, caption="Aapki Uploaded Artwork", width=500)
+    if uploaded_file:
+        st.image(uploaded_file, caption="Aapki Artwork", width=500) 
         
         st.subheader("Manual Specifications")
-        st.write("Sahi results ke liye niche diye gaye fields ko khud bharein:")
-        
         col1, col2 = st.columns(2)
         with col1:
-            mat_cost = st.number_input("Materials par kharch (₹)", min_value=0.0, step=10.0)
-            frame_cost = st.number_input("Framing ka kharch (₹)", min_value=0.0, step=10.0)
-            work_hours = st.slider("Kitne ghante kaam kiya?", 1, 300, 10)
+            mat_cost = st.number_input("Material Cost (₹)", min_value=0.0)
+            frame_cost = st.number_input("Frame Cost (₹)", min_value=0.0)
+            work_hours = st.slider("Time Spent (Hours)", 1, 300, 10)
         
         with col2:
-            canvas_size = st.selectbox("Painting ka size", ["small", "medium", "large"])
-            art_surface = st.selectbox("Surface type", ["canvas", "paper", "wood", "digital"])
-            complexity = st.slider("Complexity level (1-10)", 1, 10, 5)
+            uniqueness = st.slider("Originality Score (1-10)", 1, 10, 5)
+            story_depth = st.slider("Story Score (1-10)", 1, 10, 5)
+            complexity = st.slider("Detail Level (1-10)", 1, 10, 5)
 
-        # Intangible values
-        uniqueness = st.slider("Originality Score", 1, 10, 5)
-        story_depth = st.slider("Story/Narrative Score", 1, 10, 5)
-        raw_desc = st.text_area("Initial Description", placeholder="Artwork ke baare mein kuch shabd likhein...")
+        raw_desc = st.text_area("Initial Description", placeholder="Painting ke bare mein likhein...")
 
         if st.button("Run Full AI Evaluation"):
             try:
-                with st.spinner("AI aapki artwork ko analyze kar raha hai..."):
-                    # Prepare data for Environment
-                    env_input = {
-                        "material_cost": mat_cost,
-                        "frame_cost": frame_cost,
-                        "time_spent": work_hours,
-                        "size": canvas_size,
-                        "surface_type": art_surface,
-                        "detail_level": complexity,
-                        "originality": uniqueness,
-                        "story_score": story_depth
-                    }
-                    
-                    env = ArtEnv(env_input)
-                    
-                    # Refine Description using LLM
-                    art_prompt = f"Develop a deep, emotional curatorial description for this artwork. Base info: {raw_desc}. Details: {canvas_size} {art_surface}, detail level {complexity}/10, and high originality. Highlight the soul of the work."
-                    
-                    ai_response = client.chat.completions.create(
-                        model=os.environ.get("MODEL_NAME", "meta-llama/Llama-3-8B-Instruct"),
-                        messages=[{"role": "user", "content": art_prompt}],
-                        max_tokens=400
-                    )
-                    final_description = ai_response.choices[0].message.content
+                with st.spinner("Gemini AI analyzing..."):
+                    # Medium Task: Refine Description using Gemini API
+                    prompt = f"Refine this art description: '{raw_desc}'. Details: Complexity {complexity}/10, Originality {uniqueness}/10. Make it professional."
+                    response = model.generate_content(prompt)
+                    final_description = response.text
 
-                    # Run env step
+                    # Env calculation
+                    env_data = {"material_cost": mat_cost, "frame_cost": frame_cost, "time_spent": work_hours, 
+                                "originality": uniqueness, "story_score": story_depth, "detail_level": complexity}
+                    
+                    env = ArtEnv(env_data)
                     action = Action(predicted_price=0.0, description=final_description)
-                    obs, reward, done, info = env.step(action)
+                    _, reward, _, info = env.step(action)
                     
-                    st.success("Analysis Poori Ho Gayi!")
+                    st.success("Analysis Complete!")
 
-                    # TASK 1: Sales Strategy
-                    st.markdown("### 📍 Easy Task: Sales Strategy & Reach")
-                    st.info("Aapke liye best recommended platforms:")
+                    # Easy Task: Platforms & Personal Website
+                    st.subheader("📍 Easy Task: Sales Strategy")
+                    st.info(f"Task Reward: {reward.value * 0.2:.4f}")
                     st.markdown(f"""
-                    * **Sell-Buy-Artworks (My Portfolio Website):** [Visit Site](https://sell-buy-artworks.netlify.app/)
-                      **Personal Note:** Is website ko maine khud banaya hai. Aap yahan apni artwork upload karne ke liye mujhe request bhej sakte hain. Ye platform meri audience ke liye hai jahan log aapki art explore aur buy kar sakte hain. Contact number website par available hai!
-                    * **Instagram & Pinterest:** Visual reach ke liye best offline-online mix.
-                    * **Etsy:** Agar aap international shipping ke liye ready hain.
+                    * **Sell-Buy-Artworks (My Website):** [Visit Site](https://sell-buy-artworks.netlify.app/)
+                      **Note:** Is website ko maine khud banaya hai. Aap mujhe yahan request bhej sakte hain artwork upload karne ke liye. Audience aapka kaam dekh kar buy kar sakti hai.
+                    * **Instagram/Etsy:** Global reach ke liye best platforms hain.
                     """)
-                    st.write(f"Task Reward: {reward.value * 0.2:.2f}")
 
-                    # TASK 2: AI Description
-                    st.markdown("### 📝 Medium Task: Refined Exhibition Description")
+                    # Medium Task Output
+                    st.subheader("📝 Medium Task: AI Description")
+                    st.info(f"Task Reward: {reward.value * 0.3:.4f}")
                     st.write(final_description)
-                    st.write(f"Task Reward: {reward.value * 0.3:.2f}")
 
-                    # TASK 3: Pricing Analysis
-                    st.markdown("### 💰 Hard Task: Financial Valuation")
-                    col_p, col_a = st.columns(2)
-                    with col_p:
-                        st.metric("Predicted Market Value", f"₹{info['predicted_price']}")
-                        st.caption("AI based emotional and demand value.")
-                    with col_a:
-                        st.metric("Actual Mathematical Value", f"₹{info['actual_price']}")
-                        st.caption("Cost + Labor + Skill based valuation.")
-                    
-                    st.markdown(f"**Valuation Logic:** Actual price aapke mehnat aur material cost ko skill factor se multiply karke nikali gayi hai. Predicted price market demand aur aapki story ke emotional weight par nirbhar hai.")
-                    st.write(f"Task Reward: {reward.value * 0.5:.2f}")
-
-                    # Final Reward Score
-                    st.divider()
-                    st.write(f"**Environment Reward Summary:** {reward.value}")
-                    st.progress(reward.value)
+                    # Hard Task Output
+                    st.subheader("💰 Hard Task: Pricing Analysis")
+                    st.info(f"Task Reward: {reward.value * 0.5:.4f}")
+                    c1, c2 = st.columns(2)
+                    c1.metric("Predicted Market Value", f"₹{info['predicted_price']}")
+                    c2.metric("Actual Mathematical Value", f"₹{info['actual_price']}")
+                    st.write(f"Difference: ₹{abs(info['predicted_price'] - info['actual_price'])}")
 
             except Exception as e:
                 st.error(f"Error: {e}")
-                st.write("Check karein ki kya 'HF_TOKEN' sahi se set hai Settings mein.")
+                st.info("Check karein ki kya 'GEMINI_API_KEY' sahi se set hai Settings mein.")
 
 if __name__ == "__main__":
     main()
