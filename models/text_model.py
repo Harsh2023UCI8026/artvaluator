@@ -1,7 +1,7 @@
 # models/text_model.py
 
 import os
-from google import genai
+import google.generativeai as genai
 
 # -------------------------------
 # LOAD ENV (SAFE FOR HF + LOCAL)
@@ -21,7 +21,8 @@ client = None
 
 if API_KEY:
     try:
-        client = genai.Client(api_key=API_KEY)
+        genai.configure(api_key=API_KEY)
+        model = genai.GenerativeModel("gemini-2.0-flash")
     except Exception as e:
         client = None
 
@@ -64,10 +65,7 @@ Write at least 6–8 lines.
 """
 
         # ✅ Gemini call (UPDATED FORMAT)
-        response = client.models.generate_content(
-            model="gemini-2.0-flash",
-            contents=[prompt, image]
-        )
+        response = model.generate_content([prompt, image])
 
         # -------------------------------
         # SAFE RESPONSE EXTRACTION
