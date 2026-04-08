@@ -98,100 +98,218 @@
 
 
 
+# import streamlit as st
+# import os
+# import requests
+# import json
+# from env.art_env import ArtEnv, Action
+
+# # API Key fetching from Secrets
+# API_KEY = os.environ.get("GEMINI_API_KEY")
+
+# def get_refined_description(user_text, detail, originality):
+#     """Gemini API call to refine description using REST"""
+#     url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={API_KEY}"
+#     headers = {'Content-Type': 'application/json'}
+#     prompt = (f"Refine this art description professionally: '{user_text}'. "
+#               f"Consider complexity {detail}/10 and originality {originality}/10. "
+#               f"Make it sound like an expert art curator wrote it.")
+    
+#     payload = {"contents": [{"parts": [{"text": prompt}]}]}
+#     try:
+#         response = requests.post(url, headers=headers, json=payload)
+#         return response.json()['candidates'][0]['content']['parts'][0]['text']
+#     except:
+#         return f"A professional take on: {user_text} (Deep analysis ready)"
+
+# def main():
+#     st.set_page_config(page_title="ArtValuator Pro", layout="wide")
+#     st.title("🎨 ArtValuator")
+#     st.write("Professional Art Evaluation & Marketplace Strategy")
+
+#     uploaded_file = st.file_uploader("Upload your Artwork", type=["jpg", "png", "jpeg"])
+
+#     if uploaded_file:
+#         st.image(uploaded_file, caption="Analyzed Artwork", width=500)
+        
+#         st.subheader("📝 Manual Entry (Required for Evaluation)")
+#         col1, col2 = st.columns(2)
+        
+#         with col1:
+#             mat_cost = st.number_input("Material & Framing Cost (₹)", min_value=0.0, value=500.0)
+#             work_hours = st.number_input("Time Spent (Hours)", min_value=1, value=10)
+#             complexity = st.slider("Detail/Complexity Level (1-10)", 1, 10, 5)
+        
+#         with col2:
+#             originality = st.slider("Originality Score (1-10)", 1, 10, 7)
+#             story_score = st.slider("Story/Narrative Depth (1-10)", 1, 10, 6)
+#             initial_desc = st.text_area("Initial Description", placeholder="Painting ki kahani likhein...")
+
+#         if st.button("Evaluate Masterpiece"):
+#             if not API_KEY:
+#                 st.error("Error: GEMINI_API_KEY not found in Secrets!")
+#                 return
+
+#             with st.spinner("AI is calculating values..."):
+#                 # 1. Medium Task: Refine Description
+#                 final_desc = get_refined_description(initial_desc, complexity, originality)
+
+#                 # 2. Hard Task Logic (Actual vs Predicted)
+#                 env_data = {
+#                     "mat": mat_cost, "time": work_hours, "detail": complexity,
+#                     "orig": originality, "story": story_score
+#                 }
+#                 env = ArtEnv(env_data)
+#                 _, reward, _, info = env.step(Action(predicted_price=0.0, description=final_desc))
+
+#                 st.success("Evaluation Completed!")
+#                 st.divider()
+
+#                 # --- Task 1: Sales Strategy (Easy) ---
+#                 st.subheader("📍 Easy Task: Sales Strategy & Rewards")
+#                 st.write(f"**Reward Earned:** {reward.value * 0.2:.4f}")
+#                 st.markdown(f"""
+#                 * **Primary Focus: [Sell-Buy-Artworks](https://sell-buy-artworks.netlify.app/)**
+#                   Ye website maine (the developer) khud banayi hai. Aap yahan apni artwork upload karne ke liye mujhe request bhej sakte hain. Audience yahan se aapki art buy kar sakti hai. Website par mera contact number diya hua hai, wahan se connect karein!
+#                 * **Other Platforms:** Instagram, Saatchi Art, aur Etsy par showcase karein.
+#                 """)
+
+#                 # --- Task 2: Description (Medium) ---
+#                 st.subheader("📝 Medium Task: Refined Description")
+#                 st.write(f"**Reward Earned:** {reward.value * 0.3:.4f}")
+#                 st.info(final_desc)
+
+#                 # --- Task 3: Market Value (Hard) ---
+#                 st.subheader("💰 Hard Task: Pricing Analysis")
+#                 st.write(f"**Reward Earned:** {reward.value * 0.5:.4f}")
+#                 c1, c2 = st.columns(2)
+#                 c1.metric("Predicted Market Price", f"₹{info['pred']}")
+#                 c2.metric("Actual Mathematical Price", f"₹{info['act']}")
+                
+#                 st.write(f"**Difference:** ₹{abs(info['pred'] - info['act'])}")
+#                 st.write("**Justification:** Actual value material aur labor (₹300/hr) par based hai. Predicted value aapki story aur originality ke multiplier se justify hoti hai.")
+
+#                 # Final Progress
+#                 st.progress(reward.value)
+#                 st.write(f"**Total Environment Reward Score:** {reward.value}")
+
+# if __name__ == "__main__":
+#     main()
+
+
+
+
+
+
+
+
+
+
+
+
 import streamlit as st
 import os
 import requests
 import json
 from env.art_env import ArtEnv, Action
 
-# API Key fetching from Secrets
+# Gemini API setup from Secrets
 API_KEY = os.environ.get("GEMINI_API_KEY")
 
-def get_refined_description(user_text, detail, originality):
-    """Gemini API call to refine description using REST"""
+def refine_with_ai(text, complexity, originality):
+    """Gemini API call via REST to avoid version conflicts"""
     url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={API_KEY}"
     headers = {'Content-Type': 'application/json'}
-    prompt = (f"Refine this art description professionally: '{user_text}'. "
-              f"Consider complexity {detail}/10 and originality {originality}/10. "
-              f"Make it sound like an expert art curator wrote it.")
+    prompt = (f"Act as a professional art curator. Deepen and refine this description: '{text}'. "
+              f"Incorporate the complexity level of {complexity}/10 and originality of {originality}/10. "
+              f"Explain the depth and clear vision of the artist.")
     
     payload = {"contents": [{"parts": [{"text": prompt}]}]}
     try:
         response = requests.post(url, headers=headers, json=payload)
         return response.json()['candidates'][0]['content']['parts'][0]['text']
     except:
-        return f"A professional take on: {user_text} (Deep analysis ready)"
+        return f"Exquisite artwork with a complexity of {complexity}/10, showcasing a unique vision."
 
 def main():
     st.set_page_config(page_title="ArtValuator Pro", layout="wide")
     st.title("🎨 ArtValuator")
-    st.write("Professional Art Evaluation & Marketplace Strategy")
+    st.write("Professional Evaluation & Artist Support System")
 
-    uploaded_file = st.file_uploader("Upload your Artwork", type=["jpg", "png", "jpeg"])
+    uploaded_file = st.file_uploader("Apni Artwork upload karein", type=["jpg", "png", "jpeg"])
 
     if uploaded_file:
-        st.image(uploaded_file, caption="Analyzed Artwork", width=500)
+        # Warning Fixed: width used instead of use_column_width
+        st.image(uploaded_file, caption="Analyzed Artwork", width=600)
         
-        st.subheader("📝 Manual Entry (Required for Evaluation)")
+        st.subheader("📊 Artist's Manual Inputs")
+        st.write("Evaluation ke liye niche di gayi values khud bharein:")
+        
         col1, col2 = st.columns(2)
-        
         with col1:
-            mat_cost = st.number_input("Material & Framing Cost (₹)", min_value=0.0, value=500.0)
-            work_hours = st.number_input("Time Spent (Hours)", min_value=1, value=10)
-            complexity = st.slider("Detail/Complexity Level (1-10)", 1, 10, 5)
+            mat_cost = st.number_input("Material Cost (₹)", min_value=0.0, value=200.0)
+            frame_cost = st.number_input("Frame Cost (₹)", min_value=0.0, value=100.0)
+            work_hours = st.slider("Kitne ghante kaam kiya?", 1, 500, 10)
         
         with col2:
             originality = st.slider("Originality Score (1-10)", 1, 10, 7)
-            story_score = st.slider("Story/Narrative Depth (1-10)", 1, 10, 6)
-            initial_desc = st.text_area("Initial Description", placeholder="Painting ki kahani likhein...")
+            story_depth = st.slider("Story Narrative Depth (1-10)", 1, 10, 6)
+            complexity = st.slider("Detail/Complexity Level (1-10)", 1, 10, 5)
 
-        if st.button("Evaluate Masterpiece"):
+        user_desc = st.text_area("Initial Description", placeholder="Artwork ki peeche ki story likhein...")
+
+        if st.button("🚀 Run Full Evaluation"):
             if not API_KEY:
-                st.error("Error: GEMINI_API_KEY not found in Secrets!")
+                st.error("Error: GEMINI_API_KEY Secrets mein nahi mili!")
                 return
 
-            with st.spinner("AI is calculating values..."):
-                # 1. Medium Task: Refine Description
-                final_desc = get_refined_description(initial_desc, complexity, originality)
+            with st.spinner("AI is analyzing your masterpiece..."):
+                # Medium Task: Refine Description using AI
+                final_desc = refine_with_ai(user_desc, complexity, originality)
 
-                # 2. Hard Task Logic (Actual vs Predicted)
+                # Environment Logic Calculation
                 env_data = {
-                    "mat": mat_cost, "time": work_hours, "detail": complexity,
-                    "orig": originality, "story": story_score
+                    "mat": mat_cost, "frame": frame_cost, "time": work_hours,
+                    "orig": originality, "story": story_depth, "detail": complexity
                 }
                 env = ArtEnv(env_data)
                 _, reward, _, info = env.step(Action(predicted_price=0.0, description=final_desc))
 
-                st.success("Evaluation Completed!")
+                st.success("Evaluation Complete!")
                 st.divider()
 
-                # --- Task 1: Sales Strategy (Easy) ---
-                st.subheader("📍 Easy Task: Sales Strategy & Rewards")
-                st.write(f"**Reward Earned:** {reward.value * 0.2:.4f}")
+                # --- EASY TASK: SALES STRATEGY ---
+                st.subheader("📍 Easy Task: Platform Discovery")
+                st.info(f"Task Reward: {reward.value * 0.2:.4f}")
                 st.markdown(f"""
-                * **Primary Focus: [Sell-Buy-Artworks](https://sell-buy-artworks.netlify.app/)**
-                  Ye website maine (the developer) khud banayi hai. Aap yahan apni artwork upload karne ke liye mujhe request bhej sakte hain. Audience yahan se aapki art buy kar sakti hai. Website par mera contact number diya hua hai, wahan se connect karein!
-                * **Other Platforms:** Instagram, Saatchi Art, aur Etsy par showcase karein.
+                **Primary Recommendation (Top Focus):**
+                * **[Sell-Buy-Artworks](https://sell-buy-artworks.netlify.app/):** Is website ko maine (developer) khud banaya hai. Aap yahan apni artwork upload karne ke liye mujhe request bhej sakte hain. Audience yahan se aapka kaam explore kar sakti hai aur pasand aane par buy bhi kar sakti hai. Website par mera contact number hai, mujhse contact karein!
+                
+                **Global Marketplaces:**
+                * **Etsy:** Creative products ke liye.
+                * **Saatchi Art:** Professional fine art ke liye.
+                * **Instagram:** Social reach aur direct sales ke liye.
                 """)
 
-                # --- Task 2: Description (Medium) ---
-                st.subheader("📝 Medium Task: Refined Description")
-                st.write(f"**Reward Earned:** {reward.value * 0.3:.4f}")
-                st.info(final_desc)
+                # --- MEDIUM TASK: AI DESCRIPTION ---
+                st.subheader("📝 Medium Task: Curated Description")
+                st.info(f"Task Reward: {reward.value * 0.3:.4f}")
+                st.write(final_desc)
 
-                # --- Task 3: Market Value (Hard) ---
-                st.subheader("💰 Hard Task: Pricing Analysis")
-                st.write(f"**Reward Earned:** {reward.value * 0.5:.4f}")
+                # --- HARD TASK: MARKET VALUE ---
+                st.subheader("💰 Hard Task: Financial Analysis")
+                st.info(f"Task Reward: {reward.value * 0.5:.4f}")
                 c1, c2 = st.columns(2)
-                c1.metric("Predicted Market Price", f"₹{info['pred']}")
-                c2.metric("Actual Mathematical Price", f"₹{info['act']}")
+                c1.metric("Predicted Market Value", f"₹{info['pred']}")
+                c2.metric("Actual Mathematical Value", f"₹{info['act']}")
                 
-                st.write(f"**Difference:** ₹{abs(info['pred'] - info['act'])}")
-                st.write("**Justification:** Actual value material aur labor (₹300/hr) par based hai. Predicted value aapki story aur originality ke multiplier se justify hoti hai.")
+                st.write(f"**Value Difference:** ₹{abs(info['pred'] - info['act'])}")
+                st.write("**Pricing Logic:** Actual value aapke material aur labor costs ko justify karti hai. Predicted value story depth aur uniqueness ke multiplier par adharit hai, isliye ye actual price se hamesha thodi alag rahegi.")
 
-                # Final Progress
-                st.progress(reward.value)
+                # Environment Progress
+                st.divider()
                 st.write(f"**Total Environment Reward Score:** {reward.value}")
+                st.progress(reward.value)
 
 if __name__ == "__main__":
     main()
