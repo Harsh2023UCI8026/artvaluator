@@ -103,7 +103,7 @@ from env.art_env import ArtEnv, Action
 # Gemini Configuration
 # Ensure 'GEMINI_API_KEY' is set in Hugging Face Secrets
 genai.configure(api_key=os.environ.get("GEMINI_API_KEY"))
-model = genai.GenerativeModel('gemini-1.5-flash')
+model = genai.GenerativeModel('gemini-1.5-flash-latest')
 
 def main():
     st.set_page_config(page_title="ArtValuator Pro", layout="centered")
