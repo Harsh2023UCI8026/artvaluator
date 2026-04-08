@@ -1,68 +1,87 @@
 # models/text_model.py
 
 import os
-import io
-from dotenv import load_dotenv
 from google import genai
 
 # -------------------------------
-# LOAD ENV
+# LOAD ENV (SAFE FOR HF + LOCAL)
 # -------------------------------
-load_dotenv()
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+except:
+    pass
 
 API_KEY = os.getenv("GEMINI_API_KEY")
 
-# safety check
-if not API_KEY:
-    raise ValueError("GEMINI_API_KEY not found in .env file")
+# -------------------------------
+# CLIENT INIT (SAFE)
+# -------------------------------
+client = None
 
-# initialize client (only once)
-client = genai.Client(api_key=API_KEY)
-
+if API_KEY:
+    try:
+        client = genai.Client(api_key=API_KEY)
+    except Exception as e:
+        client = None
 
 
 # -------------------------------
-# MAIN FUNCTION (IMAGE + AI)
+# MAIN FUNCTION
 # -------------------------------
 def enhance_description_with_image(image, description, size, detail):
 
+    # ❌ If no API key
+    if not client:
+        return "⚠️ Gemini API key not found. Please add it in HF Secrets."
+
     try:
-        image = image.convert("RGB")
+        # Resize for performance (VERY IMPORTANT 🔥)
+        image = image.convert("RGB").resize((512, 512))
 
         prompt = f"""
 You are an expert art storyteller.
+
+The user created this artwork.
 
 User description: {description}
 Size: {size}
 Detail level: {detail}/10
 
-Analyze the image and explain:
-- what is happening
-- emotions
-- story
-- why buyer will like it
+Analyze BOTH the image and description carefully.
 
-Use simple English. Make it emotional and detailed.
-Write at least 6 lines.
+Write a beautiful caption that:
+- explains what is happening in the painting
+- describes emotions
+- tells a meaningful story
+- helps audience connect deeply
+- makes buyers interested
+
+Use simple English.
+Make it emotional, human-like, and expressive.
+Avoid generic lines.
+Write at least 6–8 lines.
 """
 
+        # ✅ Gemini call (UPDATED FORMAT)
         response = client.models.generate_content(
             model="gemini-2.0-flash",
-            contents=[prompt, image]   # ✅ IMPORTANT CHANGE
+            contents=[prompt, image]
         )
 
-        # ✅ SAFE RESPONSE EXTRACTION
+        # -------------------------------
+        # SAFE RESPONSE EXTRACTION
+        # -------------------------------
         if hasattr(response, "text") and response.text:
             return response.text.strip()
 
-        # fallback extraction
         if hasattr(response, "candidates"):
             try:
                 return response.candidates[0].content.parts[0].text.strip()
             except:
                 pass
 
-        return "AI returned empty response"
+        return "⚠️ AI returned empty response"
 
     except Exception as e:
-        return f"Gemini Error: {str(e)}"
+        return f"⚠️ Gemini Error: {str(e)}"
