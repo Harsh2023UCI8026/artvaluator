@@ -1,14 +1,19 @@
-name: "artvaluator-env"
-version: "1.0.0"
-description: "AI-powered artwork valuation environment for pricing and description generation."
+version: "1.0"
+name: "artvaluator"
+description: "AI Environment for Artwork Valuation and Analysis"
+entrypoint: "inference.py"
+sdk_version: "docker"
 tasks:
-  - id: "easy_platform"
+  - id: "platform_recommendation"
     difficulty: "easy"
-  - id: "medium_description"
+    grader: "deterministic"
+  - id: "description_gen"
     difficulty: "medium"
-  - id: "hard_pricing"
+    grader: "deterministic"
+  - id: "price_prediction"
     difficulty: "hard"
-models:
-  observation: "env.art_env.Observation"
-  action: "env.art_env.Action"
-  reward: "env.art_env.Reward"
+    grader: "deterministic"
+metadata:
+  vcpus: 2
+  memory_gb: 8
+  app_port: 7860
