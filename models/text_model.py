@@ -47,7 +47,7 @@ Use simple English. Make it emotional and detailed.
 Write at least 6 lines.
 """
 
-                response = genai.GenerativeModel("gemini-1.5-pro--latest").generate_content(
+                response = genai.GenerativeModel("gemini-pro-vision").generate_content(
                     [prompt, image]
                 )
 
