@@ -1,85 +1,61 @@
 # models/text_model.py
 
 import os
-import google.generativeai as genai
+
+# ❌ dotenv remove (HF me needed nahi)
+# from dotenv import load_dotenv
+# load_dotenv()
+
+# ✅ direct environment variable read
+API_KEY = os.environ.get("GEMINI_API_KEY")
 
 # -------------------------------
-# LOAD ENV (SAFE FOR HF + LOCAL)
+# SAFETY CHECK
 # -------------------------------
-try:
-    from dotenv import load_dotenv
-    load_dotenv()
-except:
-    pass
-
-API_KEY = os.getenv("GEMINI_API_KEY")
-
-# -------------------------------
-# CLIENT INIT (SAFE)
-# -------------------------------
-client = None
-
-if API_KEY:
-    try:
-        genai.configure(api_key=API_KEY)
-        model = genai.GenerativeModel("gemini-2.0-flash")
-    except Exception as e:
-        client = None
-
-
-# -------------------------------
-# MAIN FUNCTION
-# -------------------------------
-def enhance_description_with_image(image, description, size, detail):
-
-    # ❌ If no API key
-    if not client:
+if not API_KEY:
+    def enhance_description_with_image(image, description, size, detail):
         return "⚠️ Gemini API key not found. Please add it in HF Secrets."
-
+else:
     try:
-        # Resize for performance (VERY IMPORTANT 🔥)
-        image = image.convert("RGB").resize((512, 512))
+        import google.generativeai as genai
 
-        prompt = f"""
+        genai.configure(api_key=API_KEY)
+
+    except Exception as e:
+        def enhance_description_with_image(image, description, size, detail):
+            return f"Gemini import error: {str(e)}"
+
+    else:
+        # -------------------------------
+        # MAIN FUNCTION
+        # -------------------------------
+        def enhance_description_with_image(image, description, size, detail):
+
+            try:
+                image = image.convert("RGB")
+
+                prompt = f"""
 You are an expert art storyteller.
-
-The user created this artwork.
 
 User description: {description}
 Size: {size}
 Detail level: {detail}/10
 
-Analyze BOTH the image and description carefully.
+Analyze the image and explain:
+- what is happening
+- emotions
+- story
+- why buyer will like it
 
-Write a beautiful caption that:
-- explains what is happening in the painting
-- describes emotions
-- tells a meaningful story
-- helps audience connect deeply
-- makes buyers interested
-
-Use simple English.
-Make it emotional, human-like, and expressive.
-Avoid generic lines.
-Write at least 6–8 lines.
+Use simple English. Make it emotional and detailed.
+Write at least 6 lines.
 """
 
-        # ✅ Gemini call (UPDATED FORMAT)
-        response = model.generate_content([prompt, image])
+                response = genai.GenerativeModel("gemini-1.5-flash").generate_content(
+                    [prompt, image]
+                )
 
-        # -------------------------------
-        # SAFE RESPONSE EXTRACTION
-        # -------------------------------
-        if hasattr(response, "text") and response.text:
-            return response.text.strip()
+                return response.text.strip()
 
-        if hasattr(response, "candidates"):
-            try:
-                return response.candidates[0].content.parts[0].text.strip()
-            except:
-                pass
-
-        return "⚠️ AI returned empty response"
-
-    except Exception as e:
-        return f"⚠️ Gemini Error: {str(e)}"
+            except Exception as e:
+                return f"Gemini Error: {str(e)}"
