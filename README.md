@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # ArtValuator
 
 This project is inspired by a personal experience where I sold a painting at a very low price because I didn’t know its actual value.
@@ -151,3 +152,17 @@ Better image analysis using advanced models
 Integration with real art marketplace data
 Artist profile and reputation scoring
 More accurate demand-based pricing
+=======
+---
+title: Artvaluator
+emoji: 🚀
+colorFrom: yellow
+colorTo: green
+sdk: docker
+pinned: false
+license: mit
+short_description: AI-powered artwork pricing and evaluation system
+---
+
+Check out the configuration reference at https://huggingface.co/docs/hub/spaces-config-reference
+>>>>>>> b8c232fb7498346ce5414fb4f69ee8519bb3008c
