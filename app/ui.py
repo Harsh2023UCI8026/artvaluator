@@ -4,6 +4,7 @@ from PIL import Image
 
 # Fix import paths
 sys.path.append(os.path.dirname(os.path.dirname(__file__)))
+st.set_page_config(page_title="ArtValuator")
 
 from utils.pricing import calculate_price, get_price_range
 from utils.validation import validate_all
@@ -14,7 +15,6 @@ from env.grader import grade_easy, grade_medium, grade_hard
 
 
 def main():
-    st.set_page_config(page_title="ArtValuator")
 
     st.title("ArtValuator")
 
