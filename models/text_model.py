@@ -2,11 +2,7 @@
 
 import os
 
-# ❌ dotenv remove (HF me needed nahi)
-# from dotenv import load_dotenv
-# load_dotenv()
-
-# ✅ direct environment variable read
+# direct environment variable read
 API_KEY = os.environ.get("GEMINI_API_KEY")
 
 # -------------------------------
@@ -51,7 +47,7 @@ Use simple English. Make it emotional and detailed.
 Write at least 6 lines.
 """
 
-                response = genai.GenerativeModel("gemini-1.5-flash").generate_content(
+                response = genai.GenerativeModel("gemini-1.5-pro--latest").generate_content(
                     [prompt, image]
                 )
 
