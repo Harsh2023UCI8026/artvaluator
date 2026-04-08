@@ -2,31 +2,26 @@
 
 import os
 
-# direct environment variable read
+# -------------------------------
+# LOAD API KEY
+# -------------------------------
 API_KEY = os.environ.get("GEMINI_API_KEY")
 
-# -------------------------------
-# SAFETY CHECK
-# -------------------------------
 if not API_KEY:
     def enhance_description_with_image(image, description, size, detail):
-        return "⚠️ Gemini API key not found. Please add it in HF Secrets."
+        return "⚠️ Gemini API key not found. Add it in HF Secrets."
 else:
     try:
-        import google.generativeai as genai
+        from google import genai
 
-        genai.configure(api_key=API_KEY)
+        client = genai.Client(api_key=API_KEY)
 
     except Exception as e:
         def enhance_description_with_image(image, description, size, detail):
-            return f"Gemini import error: {str(e)}"
+            return f"Import Error: {str(e)}"
 
     else:
-        # -------------------------------
-        # MAIN FUNCTION
-        # -------------------------------
         def enhance_description_with_image(image, description, size, detail):
-
             try:
                 image = image.convert("RGB")
 
@@ -47,8 +42,9 @@ Use simple English. Make it emotional and detailed.
 Write at least 6 lines.
 """
 
-                response = genai.GenerativeModel("gemini-pro-vision").generate_content(
-                    [prompt, image]
+                response = client.models.generate_content(
+                    model="gemini-2.0-flash",
+                    contents=[prompt, image]
                 )
 
                 return response.text.strip()
