@@ -56,7 +56,6 @@
 
 
 import pydantic
-from enum import Enum
 from typing import Dict, Any, Tuple
 
 class Action(pydantic.BaseModel):
@@ -65,7 +64,6 @@ class Action(pydantic.BaseModel):
 
 class Observation(pydantic.BaseModel):
     features: Dict[str, Any]
-    market_stats: Dict[str, float]
 
 class Reward(pydantic.BaseModel):
     value: float
@@ -73,41 +71,34 @@ class Reward(pydantic.BaseModel):
 class ArtEnv:
     def __init__(self, data: Dict[str, Any]):
         self.data = data
-        self.done = False
 
     def reset(self) -> Observation:
-        return Observation(
-            features=self.data,
-            market_stats={"current_demand": 0.8}
-        )
+        return Observation(features=self.data)
 
-    def calculate_prices(self) -> Tuple[float, float]:
-        # Logic for Actual Price (Cost-based)
-        base_cost = self.data['material_cost'] + self.data['frame_cost']
-        labor_cost = self.data['time_spent'] * 250 # 250 per hour labor rate
-        actual_price = base_cost + labor_cost
+    def compute_valuation(self) -> Tuple[float, float]:
+        # Logic for Actual Mathematical Price
+        hard_costs = self.data['material_cost'] + self.data['frame_cost']
+        labor_value = self.data['time_spent'] * 200  # Rs 200/hour base labor
+        skill_multiplier = 1 + (self.data['detail_level'] * 0.1)
         
-        # Adding uniqueness and detail multiplier to Actual Price
-        actual_price *= (1 + (self.data['detail_level'] * 0.05) + (self.data['originality'] * 0.1))
+        actual_price = (hard_costs + labor_value) * skill_multiplier
         
-        # Logic for Predicted Market Value (Demand/Emotional based)
-        # Market value is often higher or lower than cost based on story depth
-        predicted_market_value = actual_price * (1 + (self.data['story_score'] * 0.08))
+        # Logic for Predicted Market Value
+        # Emotional story and originality drive market hype
+        market_hype = 1 + (self.data['originality'] * 0.05) + (self.data['story_score'] * 0.15)
+        predicted_price = actual_price * market_hype
         
-        return round(predicted_market_value, 2), round(actual_price, 2)
+        return round(predicted_price, 2), round(actual_price, 2)
 
     def step(self, action: Action) -> Tuple[Observation, Reward, bool, Dict[str, Any]]:
-        pred_market, actual_cost = self.calculate_prices()
+        predicted, actual = self.compute_valuation()
         
-        # Reward logic based on how well the agent descriptions or predictions align
-        # For simplicity in this UI version, we return a score based on data quality
-        reward_val = (self.data['originality'] + self.data['story_score']) / 20.0
+        # Reward based on data quality provided by user
+        total_reward = (self.data['originality'] + self.data['detail_level'] + self.data['story_score']) / 30.0
         
         info = {
-            "predicted_price": pred_market,
-            "actual_price": actual_cost,
-            "difference": abs(pred_market - actual_cost)
+            "predicted_price": predicted,
+            "actual_price": actual
         }
         
-        self.done = True
-        return self.reset(), Reward(value=reward_val), self.done, info
+        return self.reset(), Reward(value=total_reward), True, info
