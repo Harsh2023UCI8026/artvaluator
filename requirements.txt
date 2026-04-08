@@ -4,4 +4,4 @@ numpy
 pydantic
 openai
 python-dotenv
-google-genai
+google-generativeai

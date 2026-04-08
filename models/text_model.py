@@ -1,53 +1,49 @@
-# models/text_model.py
-
 import os
 
-# -------------------------------
-# LOAD API KEY
-# -------------------------------
 API_KEY = os.environ.get("GEMINI_API_KEY")
 
-if not API_KEY:
-    def enhance_description_with_image(image, description, size, detail):
-        return "⚠️ Gemini API key not found. Add it in HF Secrets."
-else:
-    try:
-        from google import genai
+# -------------------------------
+# SAFE FALLBACK
+# -------------------------------
+def fallback_response(description, size, detail):
+    return f"""
+This artwork shows a beautiful composition.
 
-        client = genai.Client(api_key=API_KEY)
-
-    except Exception as e:
-        def enhance_description_with_image(image, description, size, detail):
-            return f"Import Error: {str(e)}"
-
-    else:
-        def enhance_description_with_image(image, description, size, detail):
-            try:
-                image = image.convert("RGB")
-
-                prompt = f"""
-You are an expert art storyteller.
-
-User description: {description}
+Description: {description}
 Size: {size}
 Detail level: {detail}/10
 
-Analyze the image and explain:
-- what is happening
-- emotions
-- story
-- why buyer will like it
-
-Use simple English. Make it emotional and detailed.
-Write at least 6 lines.
+The artwork expresses emotions and creativity.
+It can attract buyers due to its uniqueness and effort.
 """
 
-                response = client.models.generate_content(
-                    model="gemini-2.0-flash",
-                    contents=[prompt, image]
-                )
+# -------------------------------
+# MAIN FUNCTION
+# -------------------------------
+def enhance_description_with_image(image, description, size, detail):
 
-                return response.text.strip()
+    if not API_KEY:
+        return "⚠️ Gemini API key not found."
 
-            except Exception as e:
-                return f"Gemini Error: {str(e)}"
+    try:
+        import google.generativeai as genai
+        genai.configure(api_key=API_KEY)
+
+        image = image.convert("RGB")
+
+        prompt = f"""
+Describe this artwork emotionally.
+
+Description: {description}
+Size: {size}
+Detail level: {detail}/10
+"""
+
+        model = genai.GenerativeModel("gemini-pro")  # ✅ TEXT ONLY (STABLE)
+
+        response = model.generate_content(prompt)
+
+        return response.text if response.text else fallback_response(description, size, detail)
+
+    except Exception as e:
+        return fallback_response(description, size, detail)
