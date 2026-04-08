@@ -1,6 +1,6 @@
 ---
 title: ArtValuator
-emoji: 🎨
+
 colorFrom: blue
 colorTo: green
 sdk: docker
