@@ -1,11 +1,5 @@
 import streamlit as st
-import sys, os
 from PIL import Image
-
-# Fix import paths
-sys.path.append(os.path.dirname(os.path.dirname(__file__)))
-st.set_page_config(page_title="ArtValuator")
-
 from utils.pricing import calculate_price, get_price_range
 from utils.validation import validate_all
 from models.image_model import is_artwork, extract_features
@@ -13,40 +7,37 @@ from models.text_model import enhance_description_with_image
 from env.art_env import ArtEnv, Action
 from env.grader import grade_easy, grade_medium, grade_hard
 
-
 def main():
-
-    st.title("ArtValuator")
+    st.title("🎨 ArtValuator")
+    st.markdown("---")
 
     uploaded = st.file_uploader("Upload artwork", type=["jpg", "png", "jpeg"])
 
     if uploaded:
         image = Image.open(uploaded).convert("RGB").resize((512, 512))
-        st.image(image)
+        st.image(image, caption="Uploaded Artwork", use_column_width=True)
 
-        # Validate artwork
         if not is_artwork(image):
-            st.error("Not a valid artwork")
+            st.error("The uploaded file does not appear to be a valid artwork.")
             return
 
-        # Extract features
         features = extract_features(image)
+        
+        col1, col2 = st.columns(2)
+        with col1:
+            st.info(f"Detected Size: {features['size']}")
+        with col2:
+            st.info(f"Detail Level: {features['detail_level']}/10")
 
-        st.write("Detected Size:", features["size"])
-        st.write("Detail Level:", features["detail_level"])
+        # Inputs
+        material = st.number_input("Material cost (₹)", min_value=0.0, value=100.0)
+        frame = st.number_input("Frame cost (₹)", min_value=0.0, value=50.0)
+        time = st.slider("Time Spent (hours)", 1, 100, 5)
+        originality = st.slider("Originality Score", 0, 10, 5)
+        story = st.slider("Story/Narrative Score", 0, 10, 5)
+        desc = st.text_area("Initial Description", placeholder="Briefly describe your inspiration...")
 
-        # User inputs
-        material = st.number_input("Material cost", min_value=0.0)
-        frame = st.number_input("Frame cost", min_value=0.0)
-        time = st.slider("Time (hours)", 1, 100)
-        originality = st.slider("Originality", 0, 10)
-        story = st.slider("Story", 0, 10)
-
-        desc = st.text_area("Describe your artwork")
-
-        if st.button("Run Full Evaluation"):
-
-            # Prepare data
+        if st.button("🚀 Run Full AI Evaluation"):
             data = {
                 "material_cost": material,
                 "frame_cost": frame,
@@ -58,81 +49,38 @@ def main():
                 "story_score": story
             }
 
-            # Validation
             valid, msg = validate_all(data, image)
             if not valid:
                 st.error(msg)
                 return
 
-            # ENV setup
+            # Logic
             env = ArtEnv(data)
             env.reset()
-
-            # Predict price
             predicted_price = calculate_price(data)
+            
+            # AI Description Enhancement
+            with st.spinner("AI analyzing visuals and text..."):
+                improved_desc = enhance_description_with_image(image, desc, features["size"], features["detail_level"])
 
-            action = Action(
-                predicted_price=predicted_price,
-                description=desc
-            )
-
+            action = Action(predicted_price=predicted_price, description=improved_desc)
             obs, reward, done, info = env.step(action)
 
-            # ---------------- EASY TASK ----------------
-            st.subheader("Easy Task: Where to Sell")
+            # Results UI
+            st.success("Evaluation Complete!")
+            
+            st.subheader("📍 Easy Task: Sales Strategy")
+            st.write("Recommended Platforms: Instagram, Etsy")
+            st.markdown("[Visit our Free Marketplace](https://sell-buy-artworks.netlify.app/)")
 
-            platforms = ["Instagram", "Etsy"]
+            st.subheader("📝 Medium Task: AI Description")
+            st.write(improved_desc)
 
-            st.write("Instagram: https://instagram.com")
-            st.write("Etsy: https://etsy.com")
-
-            st.write("Your Platform:")
-            st.write("https://sell-buy-artworks.netlify.app/")
-            st.write("You can upload your artwork here for free and contact the developer via website.")
-
-            # ---------------- MEDIUM TASK ----------------
-            st.subheader("Medium Task: Description")
-
-            with st.spinner("AI is analyzing your artwork..."):
-                improved = enhance_description_with_image(
-                    image,
-                    desc,
-                    features["size"],
-                    features["detail_level"]
-                )
-
-            st.write(improved)
-
-            # ---------------- HARD TASK ----------------
-            st.subheader("Hard Task: Pricing")
-
+            st.subheader("💰 Hard Task: Pricing Analysis")
             min_p, max_p = get_price_range(predicted_price)
-
-            st.write("Predicted Price:", predicted_price)
-            st.write("True Price:", env.true_price)
-            st.write("Range:", min_p, "-", max_p)
-
-            st.write("Factors affecting price:")
-            st.write(info.get("factors", "N/A"))
-
-            # ---------------- REWARD ----------------
-            st.subheader("Reward System")
-
-            st.write("Error:", info.get("error", "N/A"))
-            st.write("Reward:", reward.value)
-
-            # ---------------- GRADER ----------------
-            easy_score = grade_easy(platforms)
-            medium_score = grade_medium(improved)
-            hard_score = grade_hard(predicted_price, env.true_price)
-
-            final = (easy_score + medium_score + hard_score) / 3
-
-            st.subheader("Final Score")
-            st.write(final)
-            st.progress(final)
-
-
-# Entry point (VERY IMPORTANT for Streamlit)
-if __name__ == "__main__":
-    main()
+            st.metric("Fair Market Value", f"₹{predicted_price}")
+            st.write(f"Negotiation Range: ₹{min_p} - ₹{max_p}")
+            
+            st.subheader("🏆 Environment Rewards")
+            st.progress(reward.value)
+            st.write(f"Reward Score: {round(reward.value, 4)}")

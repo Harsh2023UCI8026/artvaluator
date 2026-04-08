@@ -1,29 +1,14 @@
-name: artvaluator-env
-description: AI-powered artwork valuation environment
-
-observation_space:
-  predicted_price: float
-  true_price: float
-
-action_space:
-  predicted_price: float
-  description: string
-
-reward:
-  type: continuous
-  range: [0.0, 1.0]
-
+name: "artvaluator-env"
+version: "1.0.0"
+description: "AI-powered artwork valuation environment for pricing and description generation."
 tasks:
-  - name: easy
-    description: platform recommendation
-
-  - name: medium
-    description: description generation
-
-  - name: hard
-    description: price prediction
-
-api:
-  reset: supported
-  step: supported
-  state: supported
+  - id: "easy_platform"
+    difficulty: "easy"
+  - id: "medium_description"
+    difficulty: "medium"
+  - id: "hard_pricing"
+    difficulty: "hard"
+models:
+  observation: "env.art_env.Observation"
+  action: "env.art_env.Action"
+  reward: "env.art_env.Reward"
