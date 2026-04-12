@@ -15,7 +15,7 @@ dependencies = [
 
 # 👇 VERY IMPORTANT (this fixes "server entry point" error)
 [project.scripts]
-server = "server.main:app"
+server = "server.app:main"
 
 [build-system]
 requires = ["setuptools", "wheel"]
