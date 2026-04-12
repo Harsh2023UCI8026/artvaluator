@@ -7,3 +7,7 @@ def main():
         port=7860,
         reload=False
     )
+
+# 👇 THIS LINE WAS MISSING (VERY IMPORTANT)
+if __name__ == "__main__":
+    main()
