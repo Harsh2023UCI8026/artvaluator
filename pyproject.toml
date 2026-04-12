@@ -3,13 +3,19 @@ name = "artvaluator-env"
 version = "0.1.0"
 description = "OpenEnv environment for art valuation"
 authors = [
-    {name = "Harsh Jha"}
+    { name = "Harsh Jha" }
 ]
+
 dependencies = [
     "fastapi",
     "uvicorn",
-    "pydantic"
+    "pydantic",
+    "openenv>=0.1.13"
 ]
+
+# 👇 VERY IMPORTANT (this fixes "server entry point" error)
+[project.scripts]
+server = "server.main:app"
 
 [build-system]
 requires = ["setuptools", "wheel"]
