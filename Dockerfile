@@ -1,25 +1,9 @@
 FROM python:3.10
 
-# Step 1: Working directory set karein
 WORKDIR /app
 
-# Step 2: Sari files copy karein
-COPY . /app
+COPY . .
 
-# Step 3: PYTHONPATH set karein (Mandatory for spec compliance)
-ENV PYTHONPATH=/app
+RUN pip install fastapi uvicorn pydantic
 
-# Step 4: Streamlit specific settings for Hugging Face
-ENV STREAMLIT_SERVER_PORT=7860
-ENV STREAMLIT_SERVER_ADDRESS=0.0.0.0
-ENV STREAMLIT_BROWSER_GATHER_USAGE_STATS=false
-
-# Step 5: Requirements install karein
-RUN pip install --no-cache-dir -r requirements.txt
-
-# Step 6: HF Space port expose karein
-EXPOSE 7860
-
-# Step 7: Final Command with explicit binding
-# Isse "Starting" wala loop fix ho jayega
-CMD ["streamlit", "run", "app.py", "--server.port=7860", "--server.address=0.0.0.0", "--server.enableCORS=false", "--server.enableXsrfProtection=false"]
+CMD ["uvicorn", "server.main:app", "--host", "0.0.0.0", "--port", "7860"]

@@ -1,19 +1,7 @@
-version: "1.0"
-name: "artvaluator"
-description: "AI Environment for Artwork Valuation and Analysis"
-entrypoint: "inference.py"
-sdk_version: "docker"
-tasks:
-  - id: "platform_recommendation"
-    difficulty: "easy"
-    grader: "deterministic"
-  - id: "description_gen"
-    difficulty: "medium"
-    grader: "deterministic"
-  - id: "price_prediction"
-    difficulty: "hard"
-    grader: "deterministic"
-metadata:
-  vcpus: 2
-  memory_gb: 8
-  app_port: 7860
+name: my_env_v4
+description: Simple Echo Environment
+
+endpoints:
+  reset: /reset
+  step: /step
+  state: /state

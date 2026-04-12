@@ -4,6 +4,7 @@
 # import json
 # from env.art_env import ArtEnv, Action
 
+
 # # API Key Fetching
 # API_KEY = os.environ.get("GEMINI_API_KEY")
 
@@ -118,7 +119,8 @@ import streamlit as st
 import os
 import requests
 import json
-from env.art_env import ArtEnv, Action
+import dotenv
+from ..env.art_env import ArtEnv, Action
 
 # API Key Security
 API_KEY = os.environ.get("GEMINI_API_KEY")
@@ -227,4 +229,3 @@ if __name__ == "__main__":
 
 
 
- 
