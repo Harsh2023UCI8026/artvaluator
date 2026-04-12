@@ -1,0 +1,16 @@
+[project]
+name = "artvaluator-env"
+version = "0.1.0"
+description = "OpenEnv environment for art valuation"
+authors = [
+    {name = "Harsh Jha"}
+]
+dependencies = [
+    "fastapi",
+    "uvicorn",
+    "pydantic"
+]
+
+[build-system]
+requires = ["setuptools", "wheel"]
+build-backend = "setuptools.build_meta"
